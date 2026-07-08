@@ -2,6 +2,7 @@
   publish = "public"
   functions = "netlify/functions"
 
+# EC signing JWKS. Used by SDID Authorization Server to verify client_assertion.
 [[redirects]]
   from = "/enrollment-creation-service/api/v1/requests/jwks"
   to = "/.netlify/functions/jwks"
@@ -15,6 +16,17 @@
 [[redirects]]
   from = "/requests/jwks"
   to = "/.netlify/functions/jwks"
+  status = 200
+
+# RSA encryption JWKS. Use only when another system needs your RSA public key.
+[[redirects]]
+  from = "/encryption-jwks"
+  to = "/.netlify/functions/rsa-jwks"
+  status = 200
+
+[[redirects]]
+  from = "/rsa-jwks"
+  to = "/.netlify/functions/rsa-jwks"
   status = 200
 
 [[redirects]]

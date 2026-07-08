@@ -65,11 +65,55 @@ function getKeyMetadata() {
   };
 }
 
+function getRsaPublicKeyPem() {
+  const publicKeyPem = process.env.RSA_JWKS_PUBLIC_KEY_PEM;
+
+  if (publicKeyPem) {
+    return normalizePem(publicKeyPem, "RSA_JWKS_PUBLIC_KEY_PEM");
+  }
+
+  const privateKeyPem = process.env.RSA_JWKS_PRIVATE_KEY_PEM;
+
+  if (privateKeyPem) {
+    return createPublicKey(
+      normalizePem(privateKeyPem, "RSA_JWKS_PRIVATE_KEY_PEM"),
+    ).export({
+      type: "spki",
+      format: "pem",
+    });
+  }
+
+  throw new Error("Missing RSA_JWKS_PUBLIC_KEY_PEM environment variable.");
+}
+
+function exportPublicJwk(publicKeyPem, expectedKeyType) {
+  const jwk = createPublicKey(publicKeyPem).export({ format: "jwk" });
+
+  if (expectedKeyType && jwk.kty !== expectedKeyType) {
+    throw new Error(
+      `Invalid key type. Expected ${expectedKeyType}, but received ${jwk.kty}.`,
+    );
+  }
+
+  return jwk;
+}
+
+function getRsaKeyMetadata() {
+  return {
+    kid: process.env.RSA_JWKS_KID || "client-encryption-rsa-001",
+    alg: process.env.RSA_JWKS_ALG || "RSA-OAEP-256",
+    use: process.env.RSA_JWKS_USE || "enc",
+  };
+}
+
 module.exports = {
   base64Url,
+  exportPublicJwk,
   getKeyMetadata,
   getPrivateKeyPem,
   getPublicKeyPem,
+  getRsaKeyMetadata,
+  getRsaPublicKeyPem,
   jsonResponse,
   normalizePem,
 };
