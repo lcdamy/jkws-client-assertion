@@ -1,0 +1,23 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/enrollment-creation-service/api/v1/requests/jwks"
+  to = "/.netlify/functions/jwks"
+  status = 200
+
+[[redirects]]
+  from = "/.well-known/jwks.json"
+  to = "/.netlify/functions/jwks"
+  status = 200
+
+[[redirects]]
+  from = "/requests/jwks"
+  to = "/.netlify/functions/jwks"
+  status = 200
+
+[[redirects]]
+  from = "/client-assertion"
+  to = "/.netlify/functions/client-assertion"
+  status = 200

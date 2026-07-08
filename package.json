@@ -1,0 +1,12 @@
+{
+  "name": "sdid-netlify-jwks-client-assertion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'"
+  },
+  "devDependencies": {
+    "netlify-cli": "latest"
+  }
+}
