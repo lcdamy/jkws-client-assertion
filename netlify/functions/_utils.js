@@ -15,35 +15,38 @@ function jsonResponse(statusCode, body, extraHeaders = {}) {
   };
 }
 
-function normalizePem(value) {
+function normalizePem(value, name = "PEM") {
   if (!value) {
-    return "";
+    throw new Error(`${name} is missing`);
   }
 
-  return value.trim().replace(/\\n/g, "\n");
+  return value
+    .replace(/^["']|["']$/g, "")
+    .replace(/\\n/g, "\n")
+    .trim()
+    .concat("\n");
 }
 
 function getPublicKeyPem() {
-  const publicKeyPem = normalizePem(process.env.JWKS_PUBLIC_KEY_PEM);
+  const publicKeyPem = process.env.JWKS_PUBLIC_KEY_PEM;
 
   if (publicKeyPem) {
-    return publicKeyPem;
+    return normalizePem(publicKeyPem, "JWKS_PUBLIC_KEY_PEM");
   }
 
   const privateKeyPem = getPrivateKeyPem();
-  return createPublicKey(privateKeyPem).export({ type: "spki", format: "pem" });
+
+  return createPublicKey(privateKeyPem).export({
+    type: "spki",
+    format: "pem",
+  });
 }
 
 function getPrivateKeyPem() {
-  const privateKeyPem = normalizePem(
+  return normalizePem(
     process.env.JWKS_PRIVATE_KEY_PEM || process.env.PRIVATE_KEY_PEM,
+    "JWKS_PRIVATE_KEY_PEM",
   );
-
-  if (!privateKeyPem) {
-    throw new Error("Missing JWKS_PRIVATE_KEY_PEM environment variable.");
-  }
-
-  return privateKeyPem;
 }
 
 function base64Url(input) {

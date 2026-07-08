@@ -1,0 +1,14 @@
+# Secret keys
+keys/
+*.pem
+*.key
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies/build
+node_modules/
+.netlify/
+dist/
