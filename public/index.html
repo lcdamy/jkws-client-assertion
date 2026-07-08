@@ -3,15 +3,577 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SDID JWKS Service</title>
+    <title>SDID JWKS and Client Assertion Service</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f8fb;
+        --card: #ffffff;
+        --text: #172033;
+        --muted: #5c687a;
+        --border: #d9e1ec;
+        --primary: #155eef;
+        --primary-dark: #0f45b5;
+        --code-bg: #0f172a;
+        --code-text: #e5e7eb;
+        --success: #047857;
+        --warning-bg: #fff8e6;
+        --warning-border: #f2cc66;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      a {
+        color: var(--primary);
+      }
+
+      .page {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 56px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #155eef 0%, #0f45b5 100%);
+        color: #ffffff;
+        border-radius: 22px;
+        padding: 34px;
+        box-shadow: 0 16px 45px rgba(21, 94, 239, 0.22);
+      }
+
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 4vw, 3.2rem);
+        line-height: 1.05;
+      }
+
+      .hero p {
+        max-width: 760px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.04rem;
+      }
+
+      .section {
+        margin-top: 28px;
+      }
+
+      .section h2 {
+        margin: 0 0 14px;
+        font-size: 1.45rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 1.15rem;
+      }
+
+      .card p {
+        margin: 0 0 14px;
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        margin-bottom: 12px;
+        border-radius: 999px;
+        background: #eaf1ff;
+        color: #0f45b5;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .warning {
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        border-radius: 16px;
+        padding: 16px 18px;
+      }
+
+      .warning strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      button,
+      .button-link {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        background: var(--primary);
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        transition:
+          background 0.16s ease,
+          transform 0.16s ease;
+      }
+
+      button:hover,
+      .button-link:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+      }
+
+      button.secondary,
+      .button-link.secondary {
+        background: #eaf1ff;
+        color: var(--primary-dark);
+      }
+
+      button.secondary:hover,
+      .button-link.secondary:hover {
+        background: #d7e4ff;
+      }
+
+      .code-block {
+        position: relative;
+        margin-top: 12px;
+      }
+
+      pre {
+        overflow-x: auto;
+        margin: 0;
+        padding: 18px;
+        border-radius: 14px;
+        background: var(--code-bg);
+        color: var(--code-text);
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+
+      code {
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .inline-code {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #eef2f7;
+        color: #111827;
+      }
+
+      .copy-inline {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 7px 10px;
+        font-size: 0.8rem;
+      }
+
+      .status {
+        min-height: 24px;
+        margin-top: 12px;
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f0f4fa;
+        color: #273244;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      footer {
+        margin-top: 32px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero,
+        .card {
+          padding: 22px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1>SDID JWKS Service</h1>
-    <p>Available endpoints:</p>
-    <ul>
-      <li><code>GET /enrollment-creation-service/api/v1/requests/jwks</code></li>
-      <li><code>GET /.well-known/jwks.json</code></li>
-      <li><code>POST /client-assertion</code></li>
-    </ul>
+    <main class="page">
+      <section class="hero">
+        <h1>SDID JWKS and Client Assertion Service</h1>
+        <p>
+          Use this page to copy the public EC signing JWKS URL, the public RSA
+          encryption JWKS URL, and curl commands for generating a signed
+          <code>client_assertion</code> and requesting an access token.
+        </p>
+      </section>
+
+      <section class="section warning">
+        <strong>Security reminder</strong>
+        The JWKS endpoints are public because they expose public keys only. The
+        <code class="inline-code">/client-assertion</code> endpoint signs JWTs
+        using the private EC key, so it must remain protected with
+        <code class="inline-code">X-Assertion-Api-Key</code>. Do not share your
+        private key or assertion API key.
+      </section>
+
+      <section class="section">
+        <h2>Public JWKS endpoints</h2>
+        <div class="grid">
+          <article class="card">
+            <span class="badge">EC · ES384 · sig</span>
+            <h3>EC signing JWKS</h3>
+            <p>
+              Used by the SDID Authorization Server to verify the signed
+              <code>client_assertion</code> JWT.
+            </p>
+
+            <div class="code-block">
+              <button
+                class="copy-inline"
+                type="button"
+                data-copy-template="{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks"
+              >
+                Copy URL
+              </button>
+              <pre><code data-template="{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks"></code></pre>
+            </div>
+
+            <div class="actions">
+              <a
+                class="button-link secondary"
+                data-link-template="{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks"
+                href="/enrollment-creation-service/api/v1/requests/jwks"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open EC JWKS
+              </a>
+              <button
+                type="button"
+                data-copy-fetch="{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks"
+              >
+                Copy EC JWKS JSON
+              </button>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="badge">RSA · RSA-OAEP-256 · enc</span>
+            <h3>RSA encryption JWKS</h3>
+            <p>
+              Used only when another system needs your RSA public encryption key.
+              Keep it separate from the EC signing JWKS.
+            </p>
+
+            <div class="code-block">
+              <button
+                class="copy-inline"
+                type="button"
+                data-copy-template="{SITE_URL}/encryption-jwks"
+              >
+                Copy URL
+              </button>
+              <pre><code data-template="{SITE_URL}/encryption-jwks"></code></pre>
+            </div>
+
+            <div class="actions">
+              <a
+                class="button-link secondary"
+                data-link-template="{SITE_URL}/encryption-jwks"
+                href="/encryption-jwks"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open RSA JWKS
+              </a>
+              <button type="button" data-copy-fetch="{SITE_URL}/encryption-jwks">
+                Copy RSA JWKS JSON
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section card">
+        <h2>Quick curl checks for JWKS</h2>
+        <p>
+          These commands help you confirm that both public JWKS endpoints are
+          reachable after deployment.
+        </p>
+
+        <div class="code-block">
+          <button class="copy-inline" type="button" data-copy-target="jwks-curl">
+            Copy
+          </button>
+          <pre><code id="jwks-curl" data-replace-origin>curl -s "{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks" | jq
+
+curl -s "{SITE_URL}/encryption-jwks" | jq</code></pre>
+        </div>
+      </section>
+
+      <section class="section card">
+        <h2>Create a client_assertion</h2>
+        <p>
+          The <code>client_assertion</code> is a signed JWT, not an encrypted
+          value. The curl command below calls your protected Netlify endpoint and
+          returns the JWT in the <code>client_assertion</code> field.
+        </p>
+
+        <div class="code-block">
+          <button
+            class="copy-inline"
+            type="button"
+            data-copy-target="client-assertion-curl"
+          >
+            Copy
+          </button>
+          <pre><code id="client-assertion-curl" data-replace-origin>curl -s -X POST "{SITE_URL}/client-assertion" \
+  -H "Content-Type: application/json" \
+  -H "X-Assertion-Api-Key: &lt;ASSERTION_API_KEY&gt;" \
+  -d '{
+    "clientId": "u5aw0txey983f0i97zh8hbhtqpahhael",
+    "audience": "https://auth.sdid.uat:8443/auth/oauth2/token",
+    "expiresInSeconds": 300
+  }' | jq -r '.client_assertion'</code></pre>
+        </div>
+      </section>
+
+      <section class="section card">
+        <h2>Generate client_assertion and request access token</h2>
+        <p>
+          Use this complete command when you want to generate a fresh assertion
+          and immediately exchange it for an OAuth access token.
+        </p>
+
+        <div class="code-block">
+          <button class="copy-inline" type="button" data-copy-target="token-curl">
+            Copy
+          </button>
+          <pre><code id="token-curl" data-replace-origin>CLIENT_ASSERTION=$(curl -s -X POST "{SITE_URL}/client-assertion" \
+  -H "Content-Type: application/json" \
+  -H "X-Assertion-Api-Key: &lt;ASSERTION_API_KEY&gt;" \
+  -d '{
+    "clientId": "u5aw0txey983f0i97zh8hbhtqpahhael",
+    "audience": "https://auth.sdid.uat:8443/auth/oauth2/token",
+    "expiresInSeconds": 300
+  }' | jq -r '.client_assertion')
+
+curl -k -X POST "https://auth.sdid.uat:8443/auth/oauth2/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "client_id=u5aw0txey983f0i97zh8hbhtqpahhael" \
+  --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+  --data-urlencode "client_assertion=${CLIENT_ASSERTION}"</code></pre>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>What to share with SDID</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Value</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Client ID</td>
+                <td><code>u5aw0txey983f0i97zh8hbhtqpahhael</code></td>
+                <td>OAuth client identifier.</td>
+              </tr>
+              <tr>
+                <td>EC JWKS URL</td>
+                <td>
+                  <code data-template="{SITE_URL}/enrollment-creation-service/api/v1/requests/jwks"></code>
+                </td>
+                <td>Used to verify <code>client_assertion</code>.</td>
+              </tr>
+              <tr>
+                <td>Algorithm</td>
+                <td><code>ES384</code></td>
+                <td>JWT signing algorithm for client authentication.</td>
+              </tr>
+              <tr>
+                <td>Authentication method</td>
+                <td><code>PRIVATE_KEY_JWT</code></td>
+                <td>OAuth client authentication method.</td>
+              </tr>
+              <tr>
+                <td>RSA JWKS URL</td>
+                <td><code data-template="{SITE_URL}/encryption-jwks"></code></td>
+                <td>Share only when RSA encryption public key is required.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="status" id="copy-status" role="status" aria-live="polite"></p>
+
+      <footer>
+        Replace <code>&lt;ASSERTION_API_KEY&gt;</code> locally before running the
+        curl commands. Never paste the assertion API key into this public page.
+      </footer>
+    </main>
+
+    <script>
+      const siteUrl = window.location.origin;
+      const statusElement = document.getElementById("copy-status");
+
+      function resolveTemplate(value) {
+        return value.replaceAll("{SITE_URL}", siteUrl);
+      }
+
+      function setStatus(message, isError = false) {
+        statusElement.textContent = message;
+        statusElement.style.color = isError ? "#b42318" : "#047857";
+
+        window.clearTimeout(setStatus.timeoutId);
+        setStatus.timeoutId = window.setTimeout(() => {
+          statusElement.textContent = "";
+        }, 3500);
+      }
+
+      function decodeHtmlEntities(value) {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = value;
+        return textarea.value;
+      }
+
+      async function copyToClipboard(value) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      document.querySelectorAll("[data-template]").forEach((element) => {
+        element.textContent = decodeHtmlEntities(
+          resolveTemplate(element.dataset.template),
+        );
+      });
+
+      document.querySelectorAll("[data-replace-origin]").forEach((element) => {
+        element.textContent = element.textContent.replaceAll("{SITE_URL}", siteUrl);
+      });
+
+      document.querySelectorAll("[data-link-template]").forEach((element) => {
+        element.href = resolveTemplate(element.dataset.linkTemplate);
+      });
+
+      document.querySelectorAll("[data-copy-template]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            await copyToClipboard(resolveTemplate(button.dataset.copyTemplate));
+            setStatus("Copied to clipboard.");
+          } catch (error) {
+            setStatus(`Copy failed: ${error.message}`, true);
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-copy-target]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            const target = document.getElementById(button.dataset.copyTarget);
+            await copyToClipboard(target.textContent);
+            setStatus("Copied command to clipboard.");
+          } catch (error) {
+            setStatus(`Copy failed: ${error.message}`, true);
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-copy-fetch]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            const url = resolveTemplate(button.dataset.copyFetch);
+            const response = await fetch(url, { headers: { Accept: "application/json" } });
+
+            if (!response.ok) {
+              throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            const json = await response.json();
+            await copyToClipboard(JSON.stringify(json, null, 2));
+            setStatus("Copied JWKS JSON to clipboard.");
+          } catch (error) {
+            setStatus(`Copy failed: ${error.message}`, true);
+          }
+        });
+      });
+    </script>
   </body>
 </html>
